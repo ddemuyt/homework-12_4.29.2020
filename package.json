@@ -1,0 +1,24 @@
+{
+  "name": "homework-12_4.29.2020",
+  "version": "1.0.0",
+  "description": " A Content Management System application driven by Node.js, inquirer, and MySQL.\u001b[D\u001b[C\u001b[A\u001b[\u001b[B",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ddemuyt/homework-12_4.29.2020.git"
+  },
+  "author": "Drake DeMuyt",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ddemuyt/homework-12_4.29.2020/issues"
+  },
+  "homepage": "https://github.com/ddemuyt/homework-12_4.29.2020#readme",
+  "dependencies": {
+    "console.table": "^0.10.0",
+    "inquirer": "^7.1.0",
+    "mysql": "^2.18.1"
+  }
+}
