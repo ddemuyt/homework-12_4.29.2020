@@ -30,11 +30,12 @@ function runApp() {
       choices: [
         "Display all employees",
         "Display all employees by Department",
-        // "3",
+        "Display all employees by Manager",
         "Add an employee",
         "Remove an employee",
-        "Update an employee's role",
-        "Update an employee's manager"
+        "Update an employee's role"
+        // ,
+        // "Update an employee's manager"
       ]
     })
     .then(function(answer) {
@@ -71,9 +72,9 @@ function runApp() {
                 updateRole();
                 break;  
                 
-            case "Update an employee's manager":
-                updateManager();
-                break;  
+            // case "Update an employee's manager":
+            //     updateManager();
+            //     break;  
         }
     });
 }
@@ -122,32 +123,37 @@ function departmentDisplay() {
 function managerDisplay() {
     const managerList = [];
     connection.query(
-        `SELECT id first_name, last_name
+        `SELECT id, first_name, last_name
             FROM employee WHERE manager = 1;`,
     (err, res) => {
         if (err) throw err;
         for (var i = 0; i < res.length; i++) {
-            employeeList.push(res[i].id + " " + res[i].first_name + " " + res[i].last_name)
+            managerList.push(res[i].id + " " + res[i].first_name + " " + res[i].last_name)
       }
-    });
+    
     
     inquirer
             .prompt({
                 name: "manager",
-                type: "rawlist",
+                type: "list",
                 message: "What manager's supervisees would you like to see?",
                 choices: managerList
             })
             .then(a => {
-                const s = a.delete.split(" ");
-                connection.query(`SELECT employee.first_name, employee.last_name, role.title, department.department_name, role.salary FROM employee LEFT JOIN role ON role.id = employee.id LEFT JOIN department ON role.department_id = department.id WHERE employee.manager_id = ? ORDER BY last_name ASC;`,
+                const s = a.manager.split(" ");
+                connection.query(
+                    `SELECT employee.first_name, employee.last_name, role.title, department.department_name, role.salary FROM employee 
+                    LEFT JOIN role ON role.id = employee.role_id 
+                        LEFT JOIN department ON role.department_id = department.id 
+                            WHERE employee.manager_id = ? ORDER BY last_name ASC;`,
                 parseInt(s[0]), 
                 (err, res) => {
                     if (err) throw err;
                     console.table(res);
                     runApp();
                 });
-            })
+            });
+        });
 }
 
 function addEmployee() {
@@ -210,11 +216,64 @@ function addEmployee() {
 }
 
 function addRole() {
+    inquirer
+    .prompt([
+        {
+        name: "title",
+        type: "input",
+        message: "What role would you like to add?"
+    },
+    {
+        name: "dept",
+        type: "list",
+        message: "What department would you like to add your role to?"  
+    },
+    {
+        name: "salary",
+        type: "input",
+        message: "What would you like to set the salary of this role to be?",
+        validate: function(value) {
+            if (isNaN(value) === false) {
+              return true;
+            }
+            return false;
+          }  
+    }
+
+])
+    .then(a => {
+        connection.query(
+            `INSERT INTO role (title, salary, department_id)
+            VALUES (?, ?, ?)`,
+        [a.title, a.dept, a.salary], 
+        (err, res) => {
+            if (err) throw err;
+            console.log("You successfully created a new role")
+            runApp();
+        });
+    });
 
 }
 
 function addDept() {
-    
+    inquirer
+    .prompt({
+        name: "dept_name",
+        type: "input",
+        message: "What department would you like to add?"
+    })
+    .then(a => {
+        connection.query(
+            `INSERT INTO department (department_name)
+        VALUES ?`,
+        a.dept_name, 
+        (err, res) => {
+            if (err) throw err;
+            console.log("You successfully added a new department")
+            runApp();
+        });
+    });
+
 }
 
 function removeEmployee() {
@@ -231,7 +290,7 @@ function removeEmployee() {
         .prompt(
             {
             name: "delete",
-            message: "Which employee would you like to delete?",
+            message: "Which employee would you like to remove?",
             type: "list",
             choices: employeeList
             }
@@ -244,7 +303,7 @@ function removeEmployee() {
             parseInt(s[0]),
             (err, res) => {
                 if (err) throw err;
-                console.log("Employee was successfully deleted");
+                console.log("Employee was successfully removed");
                 runApp();
             });
         });
@@ -253,9 +312,59 @@ function removeEmployee() {
 }
 
 function updateRole() {
-    
+    const employeeList = [];
+    const roles = [];
+
+    connection.query(
+        `SELECT id, first_name, last_name
+            FROM employee;`,
+    (err, res) => {
+        if (err) throw err;
+        for (var i = 0; i < res.length; i++) {
+            employeeList.push(res[i].id + " " + res[i].first_name + " " + res[i].last_name)
+        }
+    connection.query(
+        `SELECT id, title
+            FROM role;`,
+    (err, res) => {
+        if (err) throw err;
+        for (var i = 0; i < res.length; i++) {
+            
+            roles.push(res[i].id + " " + res[i].title);
+        }
+        inquirer
+        .prompt([
+            {
+            name: "update",
+            message: "Which employee would you like to update their role?",
+            type: "list",
+            choices: employeeList
+            },
+            {
+                name: "role",
+                message: "What new role do you wish to assign to the employee?",
+                type: "list",
+                choices: roles
+            }
+        ])
+        .then(a => {
+            const s = a.update.split(" ");
+            const r = a.role.split(" ");
+            connection.query(
+            `UPDATE employee 
+                SET role_id = ?
+                    WHERE id = ?`,
+            [parseInt(r[0]), parseInt(s[0])],
+            (err, res) => {
+                if (err) throw err;
+                console.log("Employee's role was successfully updated");
+                runApp();
+            });
+        });
+    });
+});
 }
 
-function updateManager() {
+// function updateManager() {
     
-}
+// }
