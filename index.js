@@ -13,7 +13,7 @@ var connection = mysql.createConnection({
 
   // Your password
   password: "Praise4Pelor",
-  database: "employee_managerDB"
+  database: "employee_managerdb"
 });
 
 connection.connect(function(err) {
@@ -21,66 +21,78 @@ connection.connect(function(err) {
   runApp();
 });
 
-async function runApp() {
-    try{
+function runApp() {
     inquirer
     .prompt({
       name: "action",
       type: "rawlist",
       message: "What would you like to do?",
       choices: [
-        "1",
-        "2",
-        "3",
-        "4",
-        "5",
-        "6",
-        "7"
+        "Display all employees",
+        "Display all employees by Department",
+        // "3",
+        "Add an employee",
+        "Remove an employee",
+        "Update an employee's role",
+        "Update an employee's manager"
       ]
     })
-    await function(answer) {
+    .then(function(answer) {
         switch (answer.action) {
-            case "1":
+            case "Display all employees":
                 employeeDisplay();
                 break;
         
-            case "2":
+            case "Display all employees by Department":
                 departmentDisplay();
                 break;
         
-            // case "3":
-            //     managerDisplay();
-            //     break;
-        
-            case "4":
-                addEmployee();
+            case "Display all employees by Manager":
+                managerDisplay();
                 break;
         
-            case "5":
+            case "Add an employee":
+                addEmployee();
+                break;
+
+            case "Add a role":
+                addRole();
+                break;
+
+            case "Add a department":
+                addDept();
+                break;
+        
+            case "Remove an employee":
                 removeEmployee();
                 break;
 
-            case "6":
+            case "Update an employee's role":
                 updateRole();
                 break;  
                 
-            case "7":
+            case "Update an employee's manager":
                 updateManager();
                 break;  
         }
-    }
-}
-    catch (err) {
-        console.error(err);
-    }
+    });
 }
 
 function employeeDisplay() {
-    return connection.query("SELECT employee.first_name, employee.last_name, role.title, department.name, role.salary, ")
+    connection.query(
+        `SELECT employee.first_name, employee.last_name, role.title, department.department_name, role.salary FROM employee 
+            LEFT JOIN role ON role.id = employee.role_id 
+                LEFT JOIN department ON role.department_id = department.id
+                    ORDER BY last_name ASC;`, 
+                (err, res) => {
+                    if (err) throw err;
+                    console.table(res);
+                    runApp();
+                });
 }
 
 function departmentDisplay() {
-    return inquirer
+    inquirer
             .prompt({
                 name: "department",
                 type: "rawlist",
@@ -93,31 +105,54 @@ function departmentDisplay() {
                 ] 
             })
             .then(answer => {
-
+                connection.query(
+                    `SELECT employee.first_name, employee.last_name, role.title, department.department_name, role.salary FROM employee 
+                        LEFT JOIN role ON role.id = employee.role_id 
+                            LEFT JOIN department ON role.department_id = department.id 
+                                WHERE department.department_name = ? ORDER BY last_name ASC;`,
+                answer.department, 
+                (err, res) => {
+                    if (err) throw err;
+                    console.table(res);
+                    runApp();
+                });
             })
 }
 
-// function managerDisplay() {
-//     return inquirer
-//             .prompt({
-//                 name: "manager",
-//                 type: "rawlist",
-//                 message: "What manager's supervisees would you like to see?",
-//                 choices: [
-//                   "Engineering",
-//                   "Sales",
-//                   "Legal",
-//                   "Finance"
-//                 ] 
-//             })
-//             .then(answer => {
-                
-//             })
-// }
+function managerDisplay() {
+    const managerList = [];
+    connection.query(
+        `SELECT id first_name, last_name
+            FROM employee WHERE manager = 1;`,
+    (err, res) => {
+        if (err) throw err;
+        for (var i = 0; i < res.length; i++) {
+            employeeList.push(res[i].id + " " + res[i].first_name + " " + res[i].last_name)
+      }
+    });
+    
+    inquirer
+            .prompt({
+                name: "manager",
+                type: "rawlist",
+                message: "What manager's supervisees would you like to see?",
+                choices: managerList
+            })
+            .then(a => {
+                const s = a.delete.split(" ");
+                connection.query(`SELECT employee.first_name, employee.last_name, role.title, department.department_name, role.salary FROM employee LEFT JOIN role ON role.id = employee.id LEFT JOIN department ON role.department_id = department.id WHERE employee.manager_id = ? ORDER BY last_name ASC;`,
+                parseInt(s[0]), 
+                (err, res) => {
+                    if (err) throw err;
+                    console.table(res);
+                    runApp();
+                });
+            })
+}
 
 function addEmployee() {
-    return inquirer
-            .prompt(
+    inquirer
+            .prompt([
                 {
                 name: "firstname",
                 type: "input",
@@ -133,34 +168,87 @@ function addEmployee() {
                 type: "list",
                 message: "What is the employee's role?",
                 choices: [
-                    "Lead Engineer",
-                    "Senior Engineer",
-                    "Junior Engineer",
-                    "Sales Lead",
-                    "Salesperson",
-                    "Legal Team Lead",
-                    "Lawyer",
-                    "Accountant"
+                    {value: 1, name: "Lead Engineer"},
+                    {value: 2, name: "Senior Engineer"},
+                    {value: 3, name: "Junior Engineer"},
+                    {value: 4, name: "Sales Lead"},
+                    {value: 5, name: "Salesperson"},
+                    {value: 6, name: "Legal Team Lead"},
+                    {value: 7, name: "Lawyer"},
+                    {value: 8, name: "Accountant"}
                 ]
                 },
                 {
+                    name: "confirm_manager",
+                    type: "confirm",
+                    message: "Is this employee a manager?"
+                },
+                {
                 name: "manager",
-                type: "input",
-                message: "What is the employee's role?",
+                type: "list",
+                message: "Who is the employee's manager?",
                 choices: [
-                    "Morpheus",
-                    "Thomas Anderson",
-                    "Jordan Belfort",
-                    "James McGill"
+                    {value: 1, name: "Morpheus"},
+                    {value: 2, name: "Thomas Anderson"},
+                    {value: 4, name: "Jordan Belfort"},
+                    {value: 6, name: "James McGill"},
+                    {value: null, name: "None"}
                 ]
                 }
-            )
-            .then(answer => {
-                
+            ])
+            .then(a => {
+                connection.query(
+                    `INSERT INTO employee (first_name, last_name, role_id, manager_id, manager) 
+                        VALUES (?, ?, ?, ?, ?);`,
+                    [a.firstname, a.lastname, a.role, a.manager, a.confirm_manager], 
+                (err, res) => {
+                    if (err) throw err;
+                    console.log("Successfully added employee");
+                    runApp();
+                });
             })
 }
 
+function addRole() {
+
+}
+
+function addDept() {
+    
+}
+
 function removeEmployee() {
+    const employeeList = [];
+    connection.query(
+        `SELECT id, first_name, last_name
+            FROM employee;`,
+    (err, res) => {
+        if (err) throw err;
+        for (var i = 0; i < res.length; i++) {
+            employeeList.push(res[i].id + " " + res[i].first_name + " " + res[i].last_name)
+        }
+        inquirer
+        .prompt(
+            {
+            name: "delete",
+            message: "Which employee would you like to delete?",
+            type: "list",
+            choices: employeeList
+            }
+        )
+        .then(a => {
+            const s = a.delete.split(" ");
+
+            connection.query(
+            `DELETE FROM employee WHERE id = ?`,
+            parseInt(s[0]),
+            (err, res) => {
+                if (err) throw err;
+                console.log("Employee was successfully deleted");
+                runApp();
+            });
+        });
+    });
     
 }
 

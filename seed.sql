@@ -23,20 +23,20 @@ CREATE TABLE role (
 
 CREATE TABLE department (
     id INT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(30),
+    department_name VARCHAR(30),
     PRIMARY KEY (id)
 );
 
-INSERT INTO department (name)
+INSERT INTO department (department_name)
 VALUES ("Engineering");
 
-INSERT INTO department (name)
+INSERT INTO department (department_name)
 VALUES ("Sales");
 
-INSERT INTO department (name)
+INSERT INTO department (department_name)
 VALUES ("Legal");
 
-INSERT INTO department (name)
+INSERT INTO department (department_name)
 VALUES ("Finance");
 
 INSERT INTO role (title, salary, department_id)
