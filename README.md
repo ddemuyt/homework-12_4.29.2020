@@ -1,6 +1,6 @@
 # Unit 12 MySQL Homework: Employee Tracker
 
-<img src="https://img.shields.io/badge/language-HTML-brightgreen"> <img src="https://img.shields.io/badge/language-CSS-blue"> <img src="https://img.shields.io/badge/language-JavaScript-blueviolet"> <img src ="https://img.shields.io/badge/language-MySQL-orange">
+<img src="https://img.shields.io/badge/language-JavaScript-blueviolet"> <img src ="https://img.shields.io/badge/language-MySQL-orange">
 
 ## Description 
 
